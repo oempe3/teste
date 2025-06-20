@@ -1,6 +1,6 @@
 // auth.js - Sistema de Autenticação
 // Endpoint do Google Apps Script
-const AUTH_ENDPOINT = "https://script.google.com/macros/s/AKfycbxDtebiJySq0ETPYRG_758G8vMcXmFfJtz0OsV5NXYimCbgZSBNyeer2vB7oh0BawxB0w/exec";
+const AUTH_ENDPOINT = "https://script.google.com/macros/s/AKfycbwDEDoSIYOFaFf0I6I2XBwwNxd9tyDLoQTYPjttWX8iz8TpeY8ns1ddr4lFv-zuClYigg/exec";
 
 // Verificar se o usuário está logado
 function verificarLogin() {
