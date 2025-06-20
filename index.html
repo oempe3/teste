@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acesso - Quadro de Disponibilidade</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="logo-section">
+        <img src="logomarca.png" alt="Logo Pernambuco III" class="logo">
+        <h1 class="system-title">Quadro de Disponibilidade</h1>
+        <p class="system-subtitle">Sistema de Monitoramento de Equipamentos</p>
+      </div>
+      
+      <form class="login-form" id="loginForm">
+        <div class="input-group">
+          <label for="login" class="input-label">E-mail</label>
+          <input type="email" id="login" class="input-field" placeholder="Digite seu e-mail" required>
+        </div>
+        
+        <div class="input-group">
+          <label for="senha" class="input-label">Senha</label>
+          <input type="password" id="senha" class="input-field" placeholder="Digite sua senha" required>
+        </div>
+        
+        <button type="submit" class="login-button">
+          <span class="button-text">Entrar</span>
+          <div class="button-loader" style="display: none;"></div>
+        </button>
+        
+        <div id="mensagem" class="error-message"></div>
+      </form>
+      
+      <div class="login-footer">
+        <p>Sistema desenvolvido para monitoramento em tempo real</p>
+        <p style="margin-top: 8px;"><a href="cadastro.html" style="color: var(--primary-color); text-decoration: none;">Não tem conta? Cadastre-se aqui</a></p>
+      </div>
+    </div>
+    
+    <div class="background-pattern"></div>
+  </div>
+
+  <script>
+    // Endpoint do Google Apps Script
+    const endpoint = "https://script.google.com/macros/s/AKfycbwSwlJATYl9L0GHOwNrGzRnhRsrNbaZedUd0lLGujwiF4noP8xHP8dUH9SrfVh7fAi0Sw/exec";
+
+    // Verificar se já está logado
+    document.addEventListener('DOMContentLoaded', function() {
+      const usuarioLogado = sessionStorage.getItem('usuarioLogado');
+      if (usuarioLogado) {
+        const userData = JSON.parse(usuarioLogado);
+        // Redirecionar baseado no tipo de usuário
+        if (userData.tipo === 'admin') {
+          window.location.href = "entrada.html";
+        } else {
+          window.location.href = "status.html";
+        }
+      }
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      entrar();
+    });
+
+    async function entrar() {
+      const email = document.getElementById("login").value.toLowerCase().trim();
+      const senha = document.getElementById("senha").value;
+      const mensagem = document.getElementById("mensagem");
+      const button = document.querySelector('.login-button');
+      const buttonText = document.querySelector('.button-text');
+      const buttonLoader = document.querySelector('.button-loader');
+      
+      // Limpar mensagem anterior
+      mensagem.textContent = "";
+      mensagem.className = "error-message";
+      
+      // Validações básicas
+      if (!email || !senha) {
+        mostrarMensagem("Por favor, preencha todos os campos.", "error");
+        return;
+      }
+      
+      // Mostrar loading
+      buttonText.style.display = 'none';
+      buttonLoader.style.display = 'block';
+      button.disabled = true;
+      
+      try {
+        const dados = {
+          type: "login",
+          email: email,
+          senha: senha
+        };
+        
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dados)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Armazenar dados do usuário na sessão
+          const userData = {
+            email: result.usuario.email,
+            nome: result.usuario.nome,
+            tipo: result.usuario.tipo,
+            autorizado: result.usuario.autorizado,
+            loginTime: new Date().toISOString()
+          };
+          
+          sessionStorage.setItem('usuarioLogado', JSON.stringify(userData));
+          
+          mostrarMensagem("Login realizado com sucesso!", "success");
+          
+          setTimeout(() => {
+            // Redirecionar baseado no tipo de usuário
+            if (userData.tipo === 'admin') {
+              window.location.href = "entrada.html";
+            } else {
+              window.location.href = "status.html";
+            }
+          }, 1000);
+        } else {
+          mostrarMensagem(result.error || "E-mail ou senha inválidos.", "error");
+        }
+        
+      } catch (error) {
+        console.error("Erro:", error);
+        mostrarMensagem("Erro ao conectar com o servidor. Verifique sua conexão e tente novamente.", "error");
+      } finally {
+        // Restaurar botão
+        buttonText.style.display = 'block';
+        buttonLoader.style.display = 'none';
+        button.disabled = false;
+      }
+    }
+
+    function mostrarMensagem(texto, tipo) {
+      const mensagem = document.getElementById("mensagem");
+      mensagem.textContent = texto;
+      mensagem.className = tipo === "success" ? "success-message" : "error-message show";
+      
+      if (tipo === "success") {
+        mensagem.style.opacity = "1";
+        mensagem.style.transform = "translateY(0)";
+      }
+    }
+  </script>
+</body>
+</html>
+

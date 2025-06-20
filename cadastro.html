@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cadastro - Quadro de Disponibilidade</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="logo-section">
+        <img src="logomarca.png" alt="Logo Pernambuco III" class="logo">
+        <h1 class="system-title">Cadastro de Usuário</h1>
+        <p class="system-subtitle">Sistema de Monitoramento de Equipamentos</p>
+      </div>
+      
+      <form class="login-form" id="cadastroForm">
+        <div class="input-group">
+          <label for="nomeCompleto" class="input-label">Nome Completo</label>
+          <input type="text" id="nomeCompleto" class="input-field" placeholder="Digite seu nome completo" required>
+        </div>
+        
+        <div class="input-group">
+          <label for="email" class="input-label">E-mail</label>
+          <input type="email" id="email" class="input-field" placeholder="Digite seu e-mail" required>
+        </div>
+        
+        <button type="submit" class="login-button">
+          <span class="button-text">Solicitar Cadastro</span>
+          <div class="button-loader" style="display: none;"></div>
+        </button>
+        
+        <div id="mensagem" class="error-message"></div>
+      </form>
+      
+      <div class="login-footer">
+        <p>Após o cadastro, você receberá uma senha por e-mail</p>
+        <p style="margin-top: 8px;"><a href="index.html" style="color: var(--primary-color); text-decoration: none;">Voltar ao Login</a></p>
+      </div>
+    </div>
+    
+    <div class="background-pattern"></div>
+  </div>
+
+  <script>
+    // Endpoint do Google Apps Script
+    const endpoint = "https://script.google.com/macros/s/AKfycbwSwlJATYl9L0GHOwNrGzRnhRsrNbaZedUd0lLGujwiF4noP8xHP8dUH9SrfVh7fAi0Sw/exec";
+
+    document.getElementById('cadastroForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      realizarCadastro();
+    });
+
+    async function realizarCadastro() {
+      const nomeCompleto = document.getElementById("nomeCompleto").value.trim();
+      const email = document.getElementById("email").value.trim().toLowerCase();
+      const mensagem = document.getElementById("mensagem");
+      const button = document.querySelector('.login-button');
+      const buttonText = document.querySelector('.button-text');
+      const buttonLoader = document.querySelector('.button-loader');
+      
+      // Limpar mensagem anterior
+      mensagem.textContent = "";
+      mensagem.className = "error-message";
+      
+      // Validações básicas
+      if (!nomeCompleto || nomeCompleto.length < 3) {
+        mostrarMensagem("Por favor, digite um nome completo válido (mínimo 3 caracteres).", "error");
+        return;
+      }
+      
+      if (!email || !email.includes('@')) {
+        mostrarMensagem("Por favor, digite um e-mail válido.", "error");
+        return;
+      }
+      
+      // Mostrar loading
+      buttonText.style.display = 'none';
+      buttonLoader.style.display = 'block';
+      button.disabled = true;
+      
+      try {
+        const dados = {
+          type: "cadastro",
+          nomeCompleto: nomeCompleto,
+          email: email,
+          data: new Date().toISOString()
+        };
+        
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dados)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          mostrarMensagem("Cadastro realizado com sucesso! Você receberá uma senha por e-mail em breve. Aguarde a autorização do administrador para acessar o sistema.", "success");
+          
+          // Limpar formulário
+          document.getElementById("nomeCompleto").value = "";
+          document.getElementById("email").value = "";
+          
+          // Redirecionar para login após 5 segundos
+          setTimeout(() => {
+            window.location.href = "index.html";
+          }, 5000);
+        } else {
+          mostrarMensagem(result.error || "Erro ao realizar cadastro. Tente novamente.", "error");
+        }
+        
+      } catch (error) {
+        console.error("Erro:", error);
+        mostrarMensagem("Erro ao conectar com o servidor. Verifique sua conexão e tente novamente.", "error");
+      } finally {
+        // Restaurar botão
+        buttonText.style.display = 'block';
+        buttonLoader.style.display = 'none';
+        button.disabled = false;
+      }
+    }
+
+    function mostrarMensagem(texto, tipo) {
+      const mensagem = document.getElementById("mensagem");
+      mensagem.textContent = texto;
+      mensagem.className = tipo === "success" ? "success-message" : "error-message show";
+      
+      if (tipo === "success") {
+        mensagem.style.opacity = "1";
+        mensagem.style.transform = "translateY(0)";
+      }
+    }
+  </script>
+</body>
+</html>
+
